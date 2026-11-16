@@ -35,7 +35,7 @@
             </div>
         </div>
         <div class="col-lg-8">
-            <div class="pc-panel p-0">
+            <div class="pc-panel p-0 mb-3">
                 <div class="p-3 border-bottom"><h2 class="h5 mb-0">Leads</h2></div>
                 <div class="table-responsive">
                     <table class="table mb-0">
@@ -64,6 +64,33 @@
                     </table>
                 </div>
             </div>
+
+            @can('notes.create')
+                <div class="pc-panel mb-3">
+                    <h2 class="h5">Add note</h2>
+                    <form method="POST" action="{{ route('customers.notes.store', $customer) }}">
+                        @csrf
+                        <textarea name="body" class="form-control mb-2" rows="3" required placeholder="Customer note…"></textarea>
+                        <button class="btn btn-pc-primary btn-sm">Save note</button>
+                    </form>
+                </div>
+            @endcan
+
+            @can('notes.view')
+                <div class="pc-panel p-0">
+                    <div class="p-3 border-bottom"><h2 class="h5 mb-0">Notes</h2></div>
+                    <ul class="list-group list-group-flush">
+                        @forelse ($customer->noteEntries as $note)
+                            <li class="list-group-item">
+                                <div>{{ $note->body }}</div>
+                                <div class="small text-secondary mt-1">{{ $note->user?->name }} · {{ $note->created_at?->format('d M Y H:i') }}</div>
+                            </li>
+                        @empty
+                            <li class="list-group-item text-secondary">No notes yet.</li>
+                        @endforelse
+                    </ul>
+                </div>
+            @endcan
         </div>
     </div>
 </x-app-layout>

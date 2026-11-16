@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Lead extends Model
@@ -25,6 +26,8 @@ class Lead extends Model
         'priority',
         'status',
         'follow_up_at',
+        'last_contacted_at',
+        'uncontacted_reminded_at',
         'consent_contact',
         'notes',
         'county_id',
@@ -37,6 +40,8 @@ class Lead extends Model
     {
         return [
             'follow_up_at' => 'datetime',
+            'last_contacted_at' => 'datetime',
+            'uncontacted_reminded_at' => 'datetime',
             'consent_contact' => 'boolean',
         ];
     }
@@ -84,6 +89,27 @@ class Lead extends Model
     public function assignmentHistories(): HasMany
     {
         return $this->hasMany(LeadAssignmentHistory::class)->latest('created_at');
+    }
+
+    /** Profile notes (morph). Distinct from the legacy `notes` text column on leads. */
+    public function noteEntries(): MorphMany
+    {
+        return $this->morphMany(Note::class, 'notable')->latest();
+    }
+
+    public function tasks(): MorphMany
+    {
+        return $this->morphMany(Task::class, 'taskable')->latest();
+    }
+
+    public function followUps(): HasMany
+    {
+        return $this->hasMany(FollowUp::class)->latest('scheduled_at');
+    }
+
+    public function activities(): MorphMany
+    {
+        return $this->morphMany(Activity::class, 'subject')->latest('occurred_at');
     }
 
     public function statusLabel(): string

@@ -4,13 +4,16 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FollowUpController;
 use App\Http\Controllers\LeadAssignmentController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\LeadKanbanController;
 use App\Http\Controllers\LeadMergeController;
 use App\Http\Controllers\LeadStatusController;
+use App\Http\Controllers\NoteController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login');
@@ -44,6 +47,9 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::put('customers/{customer}', [CustomerController::class, 'update'])
         ->middleware('permission:customers.update')
         ->name('customers.update');
+    Route::post('customers/{customer}/notes', [NoteController::class, 'storeForCustomer'])
+        ->middleware('permission:notes.create')
+        ->name('customers.notes.store');
 
     Route::get('leads', [LeadController::class, 'index'])
         ->middleware('role_or_permission:leads.view|leads.manage')
@@ -88,6 +94,54 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('leads/{lead}/merge', [LeadMergeController::class, 'store'])
         ->middleware('permission:leads.merge')
         ->name('leads.merge.store');
+    Route::post('leads/{lead}/notes', [NoteController::class, 'storeForLead'])
+        ->middleware('permission:notes.create')
+        ->name('leads.notes.store');
+
+    Route::delete('notes/{note}', [NoteController::class, 'destroy'])
+        ->middleware('permission:notes.update')
+        ->name('notes.destroy');
+
+    Route::get('follow-ups', [FollowUpController::class, 'index'])
+        ->middleware('permission:follow_ups.view')
+        ->name('follow-ups.index');
+    Route::get('follow-ups/create', [FollowUpController::class, 'create'])
+        ->middleware('permission:follow_ups.create')
+        ->name('follow-ups.create');
+    Route::post('follow-ups', [FollowUpController::class, 'store'])
+        ->middleware('permission:follow_ups.create')
+        ->name('follow-ups.store');
+    Route::get('follow-ups/{follow_up}/edit', [FollowUpController::class, 'edit'])
+        ->middleware('permission:follow_ups.update')
+        ->name('follow-ups.edit');
+    Route::put('follow-ups/{follow_up}', [FollowUpController::class, 'update'])
+        ->middleware('permission:follow_ups.update')
+        ->name('follow-ups.update');
+    Route::post('follow-ups/{follow_up}/complete', [FollowUpController::class, 'complete'])
+        ->middleware('permission:follow_ups.complete')
+        ->name('follow-ups.complete');
+    Route::post('follow-ups/{follow_up}/cancel', [FollowUpController::class, 'cancel'])
+        ->middleware('permission:follow_ups.update')
+        ->name('follow-ups.cancel');
+
+    Route::get('tasks', [TaskController::class, 'index'])
+        ->middleware('permission:tasks.view')
+        ->name('tasks.index');
+    Route::get('tasks/create', [TaskController::class, 'create'])
+        ->middleware('permission:tasks.create')
+        ->name('tasks.create');
+    Route::post('tasks', [TaskController::class, 'store'])
+        ->middleware('permission:tasks.create')
+        ->name('tasks.store');
+    Route::get('tasks/{task}/edit', [TaskController::class, 'edit'])
+        ->middleware('permission:tasks.update')
+        ->name('tasks.edit');
+    Route::put('tasks/{task}', [TaskController::class, 'update'])
+        ->middleware('permission:tasks.update')
+        ->name('tasks.update');
+    Route::post('tasks/{task}/complete', [TaskController::class, 'complete'])
+        ->middleware('permission:tasks.complete')
+        ->name('tasks.complete');
 
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::middleware('permission:users.view')->group(function () {

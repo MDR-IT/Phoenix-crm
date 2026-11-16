@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Activity;
 use App\Models\Customer;
 use App\Models\Lead;
 use App\Models\LeadAudit;
@@ -16,6 +17,7 @@ class LeadService
         private readonly LeadAuditService $auditService,
         private readonly LeadAssignmentService $assignmentService,
         private readonly DuplicateLeadDetector $duplicateDetector,
+        private readonly ActivityLogger $activityLogger,
     ) {}
 
     /**
@@ -54,6 +56,28 @@ class LeadService
             ]);
 
             $this->auditService->recordChanges($lead, [], $lead->getAttributes(), $actor);
+
+            $this->activityLogger->log(
+                $lead,
+                Activity::TYPE_CREATED,
+                'Lead created',
+                $actor,
+                'Channel: '.$lead->channel,
+                null,
+                ['channel' => $lead->channel, 'status' => $lead->status]
+            );
+
+            if ($lead->leadSource) {
+                $this->activityLogger->log(
+                    $lead,
+                    Activity::TYPE_SOURCE,
+                    'Source: '.$lead->leadSource->name,
+                    $actor,
+                    $lead->campaign ? 'Campaign: '.$lead->campaign : null,
+                    null,
+                    ['lead_source_id' => $lead->lead_source_id]
+                );
+            }
 
             if (! empty($data['assigned_to'])) {
                 $assignee = User::find($data['assigned_to']);
@@ -140,6 +164,25 @@ class LeadService
                     'notes' => $data['status_notes'] ?? null,
                     'created_at' => now(),
                 ]);
+
+                $this->activityLogger->log(
+                    $lead,
+                    Activity::TYPE_STATUS_CHANGE,
+                    sprintf(
+                        'Status: %s → %s',
+                        config('phoenix.lead_statuses.'.$oldStatus, $oldStatus),
+                        config('phoenix.lead_statuses.'.$lead->status, $lead->status)
+                    ),
+                    $actor,
+                    $data['status_notes'] ?? null,
+                    null,
+                    ['from_status' => $oldStatus, 'to_status' => $lead->status]
+                );
+
+                if (in_array($lead->status, ['contacted', 'interested', 'qualified', 'application_requested', 'converted'], true)) {
+                    $lead->last_contacted_at = $lead->last_contacted_at ?? now();
+                    $lead->save();
+                }
             }
 
             if (array_key_exists('assigned_to', $data) && (int) $data['assigned_to'] !== (int) $lead->assigned_to) {
@@ -173,6 +216,25 @@ class LeadService
             ]);
 
             $this->auditService->recordChanges($lead, $before, $lead->only(['status']), $actor);
+
+            $this->activityLogger->log(
+                $lead,
+                Activity::TYPE_STATUS_CHANGE,
+                sprintf(
+                    'Status: %s → %s',
+                    config('phoenix.lead_statuses.'.$oldStatus, $oldStatus),
+                    config('phoenix.lead_statuses.'.$status, $status)
+                ),
+                $actor,
+                $notes,
+                null,
+                ['from_status' => $oldStatus, 'to_status' => $status]
+            );
+
+            if (in_array($status, ['contacted', 'interested', 'qualified', 'application_requested', 'converted'], true)) {
+                $lead->last_contacted_at = $lead->last_contacted_at ?? now();
+                $lead->save();
+            }
 
             return $lead->fresh();
         });

@@ -92,7 +92,11 @@ class CustomerController extends Controller
     {
         $this->authorize('view', $customer);
 
-        $customer->load(['county', 'leads' => fn ($q) => $q->with(['assignee', 'product', 'leadSource'])->latest()]);
+        $customer->load([
+            'county',
+            'noteEntries.user',
+            'leads' => fn ($q) => $q->with(['assignee', 'product', 'leadSource'])->latest(),
+        ]);
 
         return view('customers.show', compact('customer'));
     }
