@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             CrmLookupSeeder::class,
             AdminUserSeeder::class,
+            IntegrationSeeder::class,
         ]);
     }
 }

@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('phoenix:process-follow-up-reminders')->hourly();
+Schedule::command('phoenix:retry-failed-webhooks --sync --limit=50')->everyFiveMinutes();

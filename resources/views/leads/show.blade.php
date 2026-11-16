@@ -195,19 +195,18 @@
                 </div>
                 <div class="pc-timeline">
                     @foreach ($timeline as $item)
-                        <div class="pc-timeline-item {{ (($item['meta'] ?? [])['placeholder'] ?? false) ? 'pc-timeline-placeholder' : '' }}">
+                        <div class="pc-timeline-item">
                             <div class="pc-timeline-badge">{{ $item['type_label'] }}</div>
                             <div class="pc-timeline-body">
                                 <div class="fw-semibold">{{ $item['title'] }}</div>
                                 @if($item['body'])
                                     <div class="small mt-1">{{ $item['body'] }}</div>
                                 @endif
+                                @if(!empty($item['meta']['channel']))
+                                    <div class="small mt-1"><span class="badge text-bg-light border">{{ $item['meta']['channel'] }}</span></div>
+                                @endif
                                 <div class="small text-secondary mt-1">
-                                    @if($item['occurred_at'])
-                                        {{ $item['occurred_at']->format('d M Y H:i') }}
-                                    @else
-                                        Coming in Phase 4
-                                    @endif
+                                    {{ optional($item['occurred_at'])->format('d M Y H:i') ?: '—' }}
                                     @if($item['user_name']) · {{ $item['user_name'] }}@endif
                                 </div>
                             </div>

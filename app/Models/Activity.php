@@ -34,7 +34,7 @@ class Activity extends Model
 
     public const TYPE_REMINDER = 'reminder';
 
-    /** Placeholder for Phase 4 channel interactions (WhatsApp / Meta / website). */
+    /** Digital channel interactions (WhatsApp / Meta / Instagram / website). */
     public const TYPE_CHANNEL_INTERACTION = 'channel_interaction';
 
     protected $fillable = [

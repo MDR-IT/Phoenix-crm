@@ -114,26 +114,8 @@ class ActivityTimelineService
             ]);
         }
 
-        // Phase 4 placeholder so the timeline already advertises future interaction types.
-        $items->push([
-            'type' => Activity::TYPE_CHANNEL_INTERACTION,
-            'type_label' => config('phoenix.activity_types.'.Activity::TYPE_CHANNEL_INTERACTION, 'Channel'),
-            'title' => 'Digital channel interactions',
-            'body' => 'WhatsApp, Meta, Instagram, and website messages will appear here in Phase 4.',
-            'user_name' => null,
-            'occurred_at' => null,
-            'meta' => ['placeholder' => true],
-            'source' => 'placeholder',
-        ]);
-
         return $items
-            ->sortByDesc(function (array $item) {
-                if ($item['source'] === 'placeholder') {
-                    return -1;
-                }
-
-                return optional($item['occurred_at'])->timestamp ?? 0;
-            })
+            ->sortByDesc(fn (array $item) => optional($item['occurred_at'])->timestamp ?? 0)
             ->values();
     }
 

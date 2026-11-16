@@ -64,8 +64,16 @@
                 <a href="{{ route('admin.roles.index') }}" class="{{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">Roles &amp; permissions</a>
             @endcan
 
+            @canany(['integrations.view', 'integrations.manage'])
+                <div class="nav-section">Integrations</div>
+                <a href="{{ route('integrations.health') }}" class="{{ request()->routeIs('integrations.health') ? 'active' : '' }}">Integration health</a>
+                <a href="{{ route('integrations.settings.index') }}" class="{{ request()->routeIs('integrations.settings.*') ? 'active' : '' }}">Integration settings</a>
+                <a href="{{ route('integrations.whatsapp') }}" class="{{ request()->routeIs('integrations.whatsapp') ? 'active' : '' }}">WhatsApp interactions</a>
+                <a href="{{ route('integrations.social-leads') }}" class="{{ request()->routeIs('integrations.social-leads') ? 'active' : '' }}">Social / digital leads</a>
+                <a href="{{ route('integrations.webhooks.index') }}" class="{{ request()->routeIs('integrations.webhooks.*') ? 'active' : '' }}">Webhook monitor</a>
+            @endcanany
+
             <div class="nav-section">Later phases</div>
-            <a href="#" class="nav-later">Integrations (Phase 4)</a>
             <a href="#" class="nav-later">Call centre (Phase 5)</a>
         </nav>
     </aside>
