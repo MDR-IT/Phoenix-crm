@@ -39,6 +39,16 @@
                 <a href="{{ route('customers.index') }}" class="{{ request()->routeIs('customers.*') ? 'active' : '' }}">Customers</a>
             @endcan
 
+            @canany(['follow_ups.view', 'tasks.view', 'notes.view', 'activities.view'])
+                <div class="nav-section">Follow-ups</div>
+                @can('follow_ups.view')
+                    <a href="{{ route('follow-ups.index') }}" class="{{ request()->routeIs('follow-ups.*') ? 'active' : '' }}">Follow-up worklist</a>
+                @endcan
+                @can('tasks.view')
+                    <a href="{{ route('tasks.index') }}" class="{{ request()->routeIs('tasks.*') ? 'active' : '' }}">Tasks</a>
+                @endcan
+            @endcanany
+
             <a href="{{ route('notifications.index') }}" class="{{ request()->routeIs('notifications.*') ? 'active' : '' }}">
                 Notifications
                 @if(($unread = auth()->user()->unreadNotifications()->count()) > 0)
@@ -55,7 +65,6 @@
             @endcan
 
             <div class="nav-section">Later phases</div>
-            <a href="#" class="nav-later">Follow-ups (Phase 3)</a>
             <a href="#" class="nav-later">Integrations (Phase 4)</a>
             <a href="#" class="nav-later">Call centre (Phase 5)</a>
         </nav>

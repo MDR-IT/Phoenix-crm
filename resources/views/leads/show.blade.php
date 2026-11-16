@@ -9,6 +9,12 @@
             </p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
+            @can('follow_ups.create')
+                <a href="{{ route('follow-ups.create', ['lead_id' => $lead->id]) }}" class="btn btn-pc-gold">Schedule follow-up</a>
+            @endcan
+            @can('tasks.create')
+                <a href="{{ route('tasks.create', ['lead_id' => $lead->id]) }}" class="btn btn-outline-secondary">Add task</a>
+            @endcan
             @can('update', $lead)
                 <a href="{{ route('leads.edit', $lead) }}" class="btn btn-outline-secondary">Edit</a>
             @endcan
@@ -52,6 +58,7 @@
                     <dt class="col-5">Campaign</dt><dd class="col-7">{{ $lead->campaign ?: '—' }}</dd>
                     <dt class="col-5">Assignee</dt><dd class="col-7">{{ $lead->assignee?->name ?: 'Unassigned' }}</dd>
                     <dt class="col-5">Follow-up</dt><dd class="col-7">{{ optional($lead->follow_up_at)->format('d M Y H:i') ?: '—' }}</dd>
+                    <dt class="col-5">Last contact</dt><dd class="col-7">{{ optional($lead->last_contacted_at)->format('d M Y H:i') ?: 'Never' }}</dd>
                     <dt class="col-5">Consent</dt><dd class="col-7">{{ $lead->consent_contact ? 'Yes' : 'No' }}</dd>
                     <dt class="col-5">Channel</dt><dd class="col-7">{{ $lead->channel }}</dd>
                     <dt class="col-5">Created by</dt><dd class="col-7">{{ $lead->creator?->name ?: '—' }}</dd>
@@ -59,10 +66,69 @@
                 @if($lead->description)
                     <hr><p class="mb-0">{{ $lead->description }}</p>
                 @endif
-                @if($lead->notes)
-                    <hr><p class="mb-0"><strong>Notes:</strong> {{ $lead->notes }}</p>
-                @endif
             </div>
+
+            @can('notes.create')
+                <div class="pc-panel mb-3">
+                    <h2 class="h5">Add note</h2>
+                    <form method="POST" action="{{ route('leads.notes.store', $lead) }}">
+                        @csrf
+                        <textarea name="body" class="form-control mb-2" rows="3" required placeholder="Call notes, observations…">{{ old('body') }}</textarea>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="is_pinned" value="1" id="pin-note">
+                            <label class="form-check-label" for="pin-note">Pin note</label>
+                        </div>
+                        <button class="btn btn-pc-primary btn-sm">Save note</button>
+                    </form>
+                </div>
+            @endcan
+
+            @can('follow_ups.create')
+                <div class="pc-panel mb-3">
+                    <h2 class="h5">Quick follow-up</h2>
+                    <form method="POST" action="{{ route('follow-ups.store') }}">
+                        @csrf
+                        <input type="hidden" name="lead_id" value="{{ $lead->id }}">
+                        <input type="hidden" name="from_lead" value="1">
+                        <select name="type" class="form-select mb-2">
+                            @foreach ($followUpTypes as $key => $label)
+                                <option value="{{ $key }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        <input type="datetime-local" name="scheduled_at" class="form-control mb-2" required value="{{ old('scheduled_at', now()->addDay()->format('Y-m-d\TH:i')) }}">
+                        <select name="assigned_to" class="form-select mb-2">
+                            @foreach ($agents as $agent)
+                                <option value="{{ $agent->id }}" @selected((int) ($lead->assigned_to ?: auth()->id()) === (int) $agent->id)>{{ $agent->name }}</option>
+                            @endforeach
+                        </select>
+                        <input type="text" name="notes" class="form-control mb-2" placeholder="Callback reason">
+                        <button class="btn btn-pc-gold btn-sm">Schedule</button>
+                    </form>
+                </div>
+            @endcan
+
+            @can('tasks.create')
+                <div class="pc-panel mb-3">
+                    <h2 class="h5">Quick task</h2>
+                    <form method="POST" action="{{ route('tasks.store') }}">
+                        @csrf
+                        <input type="hidden" name="lead_id" value="{{ $lead->id }}">
+                        <input type="text" name="title" class="form-control mb-2" required placeholder="Task title">
+                        <input type="datetime-local" name="due_at" class="form-control mb-2" value="{{ now()->addDay()->format('Y-m-d\TH:i') }}">
+                        <select name="priority" class="form-select mb-2">
+                            @foreach ($priorities as $key => $label)
+                                <option value="{{ $key }}" @selected($key === 'medium')>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        <select name="assigned_to" class="form-select mb-2">
+                            @foreach ($agents as $agent)
+                                <option value="{{ $agent->id }}" @selected((int) ($lead->assigned_to ?: auth()->id()) === (int) $agent->id)>{{ $agent->name }}</option>
+                            @endforeach
+                        </select>
+                        <button class="btn btn-outline-secondary btn-sm">Create task</button>
+                    </form>
+                </div>
+            @endcan
 
             @can('update', $lead)
                 <div class="pc-panel mb-3">
@@ -122,48 +188,109 @@
         </div>
 
         <div class="col-lg-8">
-            <div class="pc-panel mb-3 p-0">
-                <div class="p-3 border-bottom"><h2 class="h5 mb-0">Status history</h2></div>
-                <div class="table-responsive">
-                    <table class="table mb-0 small">
-                        <thead><tr><th>From</th><th>To</th><th>By</th><th>When</th><th>Notes</th></tr></thead>
-                        <tbody>
-                        @forelse ($lead->statusHistories as $row)
-                            <tr>
-                                <td>{{ config('phoenix.lead_statuses.'.$row->from_status, $row->from_status ?: '—') }}</td>
-                                <td>{{ config('phoenix.lead_statuses.'.$row->to_status, $row->to_status) }}</td>
-                                <td>{{ $row->user?->name ?: '—' }}</td>
-                                <td>{{ $row->created_at?->format('d M Y H:i') }}</td>
-                                <td>{{ $row->notes }}</td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="5" class="text-secondary text-center py-3">No status changes yet.</td></tr>
-                        @endforelse
-                        </tbody>
-                    </table>
+            <div class="pc-panel mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h5 mb-0">Activity timeline</h2>
+                    <span class="small text-secondary">Chronological · includes notes, tasks, meetings</span>
+                </div>
+                <div class="pc-timeline">
+                    @foreach ($timeline as $item)
+                        <div class="pc-timeline-item {{ (($item['meta'] ?? [])['placeholder'] ?? false) ? 'pc-timeline-placeholder' : '' }}">
+                            <div class="pc-timeline-badge">{{ $item['type_label'] }}</div>
+                            <div class="pc-timeline-body">
+                                <div class="fw-semibold">{{ $item['title'] }}</div>
+                                @if($item['body'])
+                                    <div class="small mt-1">{{ $item['body'] }}</div>
+                                @endif
+                                <div class="small text-secondary mt-1">
+                                    @if($item['occurred_at'])
+                                        {{ $item['occurred_at']->format('d M Y H:i') }}
+                                    @else
+                                        Coming in Phase 4
+                                    @endif
+                                    @if($item['user_name']) · {{ $item['user_name'] }}@endif
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <div class="pc-panel p-0 h-100">
+                        <div class="p-3 border-bottom"><h2 class="h6 mb-0">Open follow-ups</h2></div>
+                        <ul class="list-group list-group-flush small">
+                            @forelse ($lead->followUps->whereIn('status', ['scheduled', 'missed']) as $fu)
+                                <li class="list-group-item d-flex justify-content-between gap-2">
+                                    <div>
+                                        <div class="fw-semibold">{{ $fu->typeLabel() }}</div>
+                                        <div class="text-secondary">{{ $fu->scheduled_at->format('d M Y H:i') }} · {{ $fu->assignee?->name ?: '—' }}</div>
+                                        @if($fu->isOverdue())<span class="badge text-bg-danger">Overdue</span>@endif
+                                    </div>
+                                    @can('complete', $fu)
+                                        <form method="POST" action="{{ route('follow-ups.complete', $fu) }}">
+                                            @csrf
+                                            <button class="btn btn-sm btn-outline-success">Done</button>
+                                        </form>
+                                    @endcan
+                                </li>
+                            @empty
+                                <li class="list-group-item text-secondary">No open follow-ups.</li>
+                            @endforelse
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="pc-panel p-0 h-100">
+                        <div class="p-3 border-bottom"><h2 class="h6 mb-0">Open tasks</h2></div>
+                        <ul class="list-group list-group-flush small">
+                            @forelse ($lead->tasks->where('status', 'open') as $task)
+                                <li class="list-group-item d-flex justify-content-between gap-2">
+                                    <div>
+                                        <div class="fw-semibold">{{ $task->title }}</div>
+                                        <div class="text-secondary">{{ optional($task->due_at)->format('d M Y H:i') ?: 'No deadline' }} · {{ $task->assignee?->name ?: '—' }}</div>
+                                        @if($task->isOverdue())<span class="badge text-bg-danger">Overdue</span>@endif
+                                    </div>
+                                    @can('complete', $task)
+                                        <form method="POST" action="{{ route('tasks.complete', $task) }}">
+                                            @csrf
+                                            <button class="btn btn-sm btn-outline-success">Done</button>
+                                        </form>
+                                    @endcan
+                                </li>
+                            @empty
+                                <li class="list-group-item text-secondary">No open tasks.</li>
+                            @endforelse
+                        </ul>
+                    </div>
                 </div>
             </div>
 
             <div class="pc-panel mb-3 p-0">
-                <div class="p-3 border-bottom"><h2 class="h5 mb-0">Assignment history</h2></div>
-                <div class="table-responsive">
-                    <table class="table mb-0 small">
-                        <thead><tr><th>From</th><th>To</th><th>By</th><th>Method</th><th>When</th></tr></thead>
-                        <tbody>
-                        @forelse ($lead->assignmentHistories as $row)
-                            <tr>
-                                <td>{{ $row->fromUser?->name ?: '—' }}</td>
-                                <td>{{ $row->toUser?->name ?: '—' }}</td>
-                                <td>{{ $row->assigner?->name ?: '—' }}</td>
-                                <td>{{ $row->method }}</td>
-                                <td>{{ $row->created_at?->format('d M Y H:i') }}</td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="5" class="text-secondary text-center py-3">No assignments yet.</td></tr>
-                        @endforelse
-                        </tbody>
-                    </table>
-                </div>
+                <div class="p-3 border-bottom"><h2 class="h5 mb-0">Notes</h2></div>
+                <ul class="list-group list-group-flush">
+                    @forelse ($lead->noteEntries as $note)
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between gap-2">
+                                <div>
+                                    @if($note->is_pinned)<span class="badge text-bg-warning me-1">Pinned</span>@endif
+                                    <div>{{ $note->body }}</div>
+                                    <div class="small text-secondary mt-1">{{ $note->user?->name }} · {{ $note->created_at?->format('d M Y H:i') }}</div>
+                                </div>
+                                @can('delete', $note)
+                                    <form method="POST" action="{{ route('notes.destroy', $note) }}" onsubmit="return confirm('Delete this note?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                @endcan
+                            </div>
+                        </li>
+                    @empty
+                        <li class="list-group-item text-secondary">No notes yet.</li>
+                    @endforelse
+                </ul>
             </div>
 
             <div class="pc-panel p-0">

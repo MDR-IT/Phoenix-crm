@@ -11,6 +11,7 @@ use App\Models\LeadSource;
 use App\Models\Product;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\ActivityTimelineService;
 use App\Services\DuplicateLeadDetector;
 use App\Services\LeadService;
 use Illuminate\Http\RedirectResponse;
@@ -23,6 +24,7 @@ class LeadController extends Controller
     public function __construct(
         private readonly LeadService $leadService,
         private readonly DuplicateLeadDetector $duplicateDetector,
+        private readonly ActivityTimelineService $timelineService,
     ) {}
 
     public function index(Request $request): View
@@ -122,6 +124,10 @@ class LeadController extends Controller
             'assignmentHistories.fromUser',
             'assignmentHistories.toUser',
             'assignmentHistories.assigner',
+            'noteEntries.user',
+            'tasks.assignee',
+            'followUps.assignee',
+            'activities.user',
         ]);
 
         $duplicates = $this->duplicateDetector->findPossibleDuplicates(
@@ -134,7 +140,10 @@ class LeadController extends Controller
         return view('leads.show', [
             'lead' => $lead,
             'duplicates' => $duplicates,
+            'timeline' => $this->timelineService->forLead($lead),
             'statuses' => config('phoenix.lead_statuses'),
+            'followUpTypes' => config('phoenix.follow_up_types'),
+            'priorities' => config('phoenix.lead_priorities'),
             'agents' => $this->assignableUsers(),
             'teams' => Team::query()->where('is_active', true)->orderBy('name')->get(),
         ]);

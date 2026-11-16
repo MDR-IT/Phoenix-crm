@@ -334,3 +334,58 @@ a {
         grid-column: 1 / -1;
     }
 }
+
+/* Phase 3 activity timeline */
+.pc-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.pc-timeline-item {
+    display: grid;
+    grid-template-columns: 7.5rem 1fr;
+    gap: 0.85rem;
+    align-items: start;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--pc-border);
+}
+
+.pc-timeline-item:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+}
+
+.pc-timeline-badge {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--pc-navy);
+    background: rgba(196, 163, 90, 0.18);
+    border: 1px solid rgba(196, 163, 90, 0.45);
+    padding: 0.35rem 0.45rem;
+    text-align: center;
+    font-weight: 600;
+}
+
+.pc-timeline-placeholder .pc-timeline-badge {
+    background: rgba(107, 122, 144, 0.12);
+    border-color: var(--pc-border);
+    color: var(--pc-muted);
+}
+
+.pc-timeline-placeholder {
+    opacity: 0.85;
+}
+
+.pc-bucket-tabs .btn.active {
+    background: var(--pc-navy);
+    color: var(--pc-white);
+    border-color: var(--pc-navy);
+}
+
+@media (max-width: 575.98px) {
+    .pc-timeline-item {
+        grid-template-columns: 1fr;
+    }
+}

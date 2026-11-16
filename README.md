@@ -2,7 +2,7 @@
 
 Omnichannel lead management and call centre CRM for Phoenix Capital (microfinance).
 
-**Phase 2 (this branch):** Core CRM — customers, lead register, manual capture, duplicate detection, assignment (manual / round-robin / product / region / team), Kanban pipeline, audit history, CSV/Excel export, in-app assignment notifications. Stacked on Phase 1 foundation (auth, Spatie RBAC, branded Blade + Bootstrap 5 shell).
+**Phase 3 (this branch):** Follow-ups & activities — lead/customer activity timeline, notes, tasks, callbacks, dashboard widgets (today / overdue / upcoming), uncontacted-lead reminders, in-app notifications, configurable email/SMS provider stubs. Stacked on Phase 2 core CRM (and Phase 1 foundation).
 
 ## Stack
 
@@ -23,6 +23,8 @@ Omnichannel lead management and call centre CRM for Phoenix Capital (microfinanc
    ```powershell
    $env:Path = "C:\xampp\php;C:\xampp\mysql\bin;C:\Users\ADMIN\AppData\Local\Composer;" + $env:Path
    ```
+
+   Or from the project root: `. .\use-php.ps1`
 
 3. **Clone / open the project**
 
@@ -76,27 +78,36 @@ ADMIN_PASSWORD=ChangeMeNow!123
 
 **Change this password immediately** after first login (Profile → Update password), or re-seed with a stronger `ADMIN_PASSWORD`.
 
-## Phase 2 features
+## Phase 3 features
 
 | Area | What you get |
 |------|----------------|
-| Customers | Register + profile; normalised Kenyan phone (`2547…`) |
-| Leads | Register with search/filters/pagination; soft-delete archive |
-| Capture | Full manual form; Save / Cancel / Save and another |
-| Duplicates | Phone/email match on create; confirm to proceed; merge for permitted roles |
-| Assignment | Manual, round-robin, by product / region / team; history + in-app notify |
-| Pipeline | Kanban stages (New → … → Converted / Lost); drag or Move; status history |
-| Audit | Field-level old/new, user, timestamp on lead changes |
-| Export | CSV and Excel-compatible download for export-permitted roles |
-| Scope | Agents see assigned leads only unless they have `leads.view_all` |
+| Activity timeline | Chronological lead timeline: creation, source, notes, status, assignment, tasks, meetings/follow-ups; Phase 4 channel placeholder |
+| Notes | Notes on leads and customers; pinned option; timeline entries |
+| Tasks | Create, assign, deadlines, complete; overdue list + filters |
+| Follow-ups | Schedule callbacks / follow-ups / meetings; worklist buckets: today, overdue, upcoming |
+| Dashboard | Widgets for today’s / overdue / upcoming follow-ups, overdue tasks, uncontacted leads |
+| Reminders | Hourly scheduler command reminds assignees of uncontacted leads (`PHOENIX_UNCONTACTED_REMINDER_HOURS`, default 24) |
+| Notifications | In-app database notifications for task assign/complete, follow-up schedule/due, uncontacted leads |
+| Messaging stubs | Email/SMS via `OutboundMessenger` + null providers; credentials only from env (`PHOENIX_EMAIL_*`, `PHOENIX_SMS_*`) — never hardcoded |
 
-Seeded lookups: counties/regions, products, lead sources, teams, pipeline statuses (config).
+### Scheduler (reminders)
 
-## Roles & permissions (Phase 2)
+```powershell
+php artisan phoenix:process-follow-up-reminders
+```
 
-Super Administrator, CEO, Sales Manager, Call Centre Supervisor, Call Centre Agent, Sales Agent, Marketing Officer, Compliance Officer, Auditor.
+Register Laravel’s scheduler (cron / Task Scheduler) to run `php artisan schedule:run` every minute so the hourly reminder job fires.
 
-New / expanded permissions: `customers.*`, `leads.create`, `leads.update`, `leads.archive`, `leads.assign`, `leads.export`, `leads.merge`, `leads.view_all` (plus Phase 1 grants). Editable under **Roles & permissions**.
+## Phase 2 features (still included)
+
+Customers, lead register, manual capture, duplicates/merge, assignment strategies, Kanban pipeline, audit history, CSV/Excel export, agent scoping.
+
+## Roles & permissions (Phase 3)
+
+New permissions: `activities.view`, `notes.*`, `tasks.view|create|update|complete|view_all`, `follow_ups.view|create|update|complete|view_all`.
+
+Agents get create/complete on their own items; managers/supervisors get `*_view_all`. Editable under **Roles & permissions**.
 
 ## Tests
 
@@ -104,11 +115,11 @@ New / expanded permissions: `customers.*`, `leads.create`, `leads.update`, `lead
 php artisan test
 ```
 
-Uses in-memory SQLite (`phpunit.xml`). Phase 2 coverage includes manual create, edit/audit, assignment, duplicate detection, status changes, agent scoping, and merge.
+Uses in-memory SQLite (`phpunit.xml`). Phase 3 coverage includes follow-up create/complete, notes, tasks, worklist scoping, uncontacted reminders, dashboard widgets, and messaging stubs.
 
 ## Out of scope (later phases)
 
-WhatsApp / Meta / Yeastar, full follow-up module (Phase 3), reporting dashboards (Phase 6) — navigation stubs remain labelled for later.
+WhatsApp / Meta / website auto-capture (Phase 4), Yeastar telephony (Phase 5), reporting dashboards (Phase 6). Timeline already reserves a channel-interaction placeholder for Phase 4.
 
 ## Git
 

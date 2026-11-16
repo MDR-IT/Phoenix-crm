@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Activity;
 use App\Models\AssignmentRoundRobinState;
 use App\Models\Lead;
 use App\Models\LeadAssignmentHistory;
@@ -15,6 +16,7 @@ class LeadAssignmentService
 {
     public function __construct(
         private readonly LeadAuditService $auditService,
+        private readonly ActivityLogger $activityLogger,
     ) {}
 
     public function assign(Lead $lead, ?User $assignee, User $actor, string $method = 'manual', ?string $notes = null): Lead
@@ -53,6 +55,18 @@ class LeadAssignmentService
                     'created_at' => now(),
                 ]);
             }
+
+            $fromName = $fromUserId ? (User::find($fromUserId)?->name ?: 'User #'.$fromUserId) : 'Unassigned';
+            $toName = $assignee?->name ?: 'Unassigned';
+            $this->activityLogger->log(
+                $lead,
+                Activity::TYPE_ASSIGNMENT,
+                "Assigned: {$fromName} → {$toName}",
+                $actor,
+                $notes ?: ('Method: '.$method),
+                null,
+                ['method' => $method, 'from_user_id' => $fromUserId, 'to_user_id' => $toUserId]
+            );
 
             if ($assignee && $assignee->id !== $actor->id) {
                 $assignee->notify(new LeadAssignedNotification($lead, $actor, $method));

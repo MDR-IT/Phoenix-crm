@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Customer extends Model
@@ -46,6 +47,22 @@ class Customer extends Model
     public function leads(): HasMany
     {
         return $this->hasMany(Lead::class);
+    }
+
+    /** Profile notes (morph). Distinct from the legacy `notes` text column on customers. */
+    public function noteEntries(): MorphMany
+    {
+        return $this->morphMany(Note::class, 'notable')->latest();
+    }
+
+    public function tasks(): MorphMany
+    {
+        return $this->morphMany(Task::class, 'taskable')->latest();
+    }
+
+    public function activities(): MorphMany
+    {
+        return $this->morphMany(Activity::class, 'subject')->latest('occurred_at');
     }
 
     public function displayName(): string
