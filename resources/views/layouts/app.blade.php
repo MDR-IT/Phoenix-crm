@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ asset('css/phoenix.css') }}" rel="stylesheet">
+    @stack('styles')
 </head>
 <body>
 <div class="pc-shell">
@@ -25,6 +26,26 @@
             <div class="nav-section">Workspace</div>
             <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">Dashboard</a>
 
+            @canany(['leads.view', 'leads.manage'])
+                <div class="nav-section">Core CRM</div>
+                <a href="{{ route('leads.index') }}" class="{{ request()->routeIs('leads.index') || request()->routeIs('leads.show') || request()->routeIs('leads.edit') ? 'active' : '' }}">Leads</a>
+                <a href="{{ route('leads.kanban') }}" class="{{ request()->routeIs('leads.kanban') ? 'active' : '' }}">Pipeline</a>
+                @canany(['leads.create', 'leads.manage'])
+                    <a href="{{ route('leads.create') }}" class="{{ request()->routeIs('leads.create') ? 'active' : '' }}">Capture lead</a>
+                @endcanany
+            @endcanany
+
+            @can('customers.view')
+                <a href="{{ route('customers.index') }}" class="{{ request()->routeIs('customers.*') ? 'active' : '' }}">Customers</a>
+            @endcan
+
+            <a href="{{ route('notifications.index') }}" class="{{ request()->routeIs('notifications.*') ? 'active' : '' }}">
+                Notifications
+                @if(($unread = auth()->user()->unreadNotifications()->count()) > 0)
+                    <span class="badge text-bg-warning ms-1">{{ $unread }}</span>
+                @endif
+            </a>
+
             @can('users.view')
                 <div class="nav-section">Administration</div>
                 <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}">Users</a>
@@ -34,9 +55,9 @@
             @endcan
 
             <div class="nav-section">Later phases</div>
-            <a href="#" class="nav-later">Leads (Phase 2)</a>
-            <a href="#" class="nav-later">Call centre (Phase 5)</a>
+            <a href="#" class="nav-later">Follow-ups (Phase 3)</a>
             <a href="#" class="nav-later">Integrations (Phase 4)</a>
+            <a href="#" class="nav-later">Call centre (Phase 5)</a>
         </nav>
     </aside>
 
@@ -59,6 +80,9 @@
             @if (session('success'))
                 <div class="alert alert-success">{{ session('success') }}</div>
             @endif
+            @if (session('warning'))
+                <div class="alert alert-warning">{{ session('warning') }}</div>
+            @endif
             @if (session('status'))
                 <div class="alert alert-info">{{ session('status') }}</div>
             @endif
@@ -67,5 +91,6 @@
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+@stack('scripts')
 </body>
 </html>
