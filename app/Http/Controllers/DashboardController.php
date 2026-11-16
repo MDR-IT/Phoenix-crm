@@ -2,32 +2,38 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Lead;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
     public function __invoke(): View
     {
+        $user = Auth::user();
+
+        $leadQuery = Lead::query()->visibleTo($user);
+
         $kpis = [
             [
                 'label' => 'New Leads',
-                'value' => '—',
-                'hint' => 'Phase 2',
+                'value' => (clone $leadQuery)->where('status', 'new')->count(),
+                'hint' => 'Open pipeline',
             ],
             [
-                'label' => 'Open Follow-ups',
-                'value' => '—',
-                'hint' => 'Phase 3',
+                'label' => 'Assigned to me',
+                'value' => Lead::query()->where('assigned_to', $user->id)->count(),
+                'hint' => 'Active ownership',
             ],
             [
-                'label' => 'Calls Today',
-                'value' => '—',
-                'hint' => 'Phase 5',
+                'label' => 'Follow-ups due',
+                'value' => (clone $leadQuery)->whereNotNull('follow_up_at')->where('follow_up_at', '<=', now()->endOfDay())->count(),
+                'hint' => 'Phase 3 expands this',
             ],
             [
-                'label' => 'Conversions',
-                'value' => '—',
-                'hint' => 'Phase 6',
+                'label' => 'Converted',
+                'value' => (clone $leadQuery)->where('status', 'converted')->count(),
+                'hint' => 'Won leads',
             ],
         ];
 

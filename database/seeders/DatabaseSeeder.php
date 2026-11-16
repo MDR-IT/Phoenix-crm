@@ -10,6 +10,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             RolePermissionSeeder::class,
+            CrmLookupSeeder::class,
             AdminUserSeeder::class,
         ]);
     }

@@ -2,7 +2,7 @@
 
 Omnichannel lead management and call centre CRM for Phoenix Capital (microfinance).
 
-**Phase 1 (this branch):** Laravel foundation, authentication, RBAC, branded Blade + Bootstrap 5 shell, dashboard placeholders, and basic user/role administration.
+**Phase 2 (this branch):** Core CRM — customers, lead register, manual capture, duplicate detection, assignment (manual / round-robin / product / region / team), Kanban pipeline, audit history, CSV/Excel export, in-app assignment notifications. Stacked on Phase 1 foundation (auth, Spatie RBAC, branded Blade + Bootstrap 5 shell).
 
 ## Stack
 
@@ -76,11 +76,27 @@ ADMIN_PASSWORD=ChangeMeNow!123
 
 **Change this password immediately** after first login (Profile → Update password), or re-seed with a stronger `ADMIN_PASSWORD`.
 
-## Roles (Phase 1)
+## Phase 2 features
+
+| Area | What you get |
+|------|----------------|
+| Customers | Register + profile; normalised Kenyan phone (`2547…`) |
+| Leads | Register with search/filters/pagination; soft-delete archive |
+| Capture | Full manual form; Save / Cancel / Save and another |
+| Duplicates | Phone/email match on create; confirm to proceed; merge for permitted roles |
+| Assignment | Manual, round-robin, by product / region / team; history + in-app notify |
+| Pipeline | Kanban stages (New → … → Converted / Lost); drag or Move; status history |
+| Audit | Field-level old/new, user, timestamp on lead changes |
+| Export | CSV and Excel-compatible download for export-permitted roles |
+| Scope | Agents see assigned leads only unless they have `leads.view_all` |
+
+Seeded lookups: counties/regions, products, lead sources, teams, pipeline statuses (config).
+
+## Roles & permissions (Phase 2)
 
 Super Administrator, CEO, Sales Manager, Call Centre Supervisor, Call Centre Agent, Sales Agent, Marketing Officer, Compliance Officer, Auditor.
 
-Permissions are seeded and editable under **Roles & permissions** for users with `roles.update`.
+New / expanded permissions: `customers.*`, `leads.create`, `leads.update`, `leads.archive`, `leads.assign`, `leads.export`, `leads.merge`, `leads.view_all` (plus Phase 1 grants). Editable under **Roles & permissions**.
 
 ## Tests
 
@@ -88,11 +104,11 @@ Permissions are seeded and editable under **Roles & permissions** for users with
 php artisan test
 ```
 
-Uses in-memory SQLite (`phpunit.xml`).
+Uses in-memory SQLite (`phpunit.xml`). Phase 2 coverage includes manual create, edit/audit, assignment, duplicate detection, status changes, agent scoping, and merge.
 
 ## Out of scope (later phases)
 
-Leads, Kanban, WhatsApp/Meta/Yeastar integrations, call centre tooling, reporting — navigation stubs only.
+WhatsApp / Meta / Yeastar, full follow-up module (Phase 3), reporting dashboards (Phase 6) — navigation stubs remain labelled for later.
 
 ## Git
 
