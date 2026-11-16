@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\IntegrationHealthController;
+use App\Http\Controllers\Admin\IntegrationSettingsController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\CustomerController;
@@ -13,7 +15,10 @@ use App\Http\Controllers\LeadStatusController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SocialLeadController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\WebhookMonitorController;
+use App\Http\Controllers\WhatsAppInteractionController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login');
@@ -142,6 +147,37 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('tasks/{task}/complete', [TaskController::class, 'complete'])
         ->middleware('permission:tasks.complete')
         ->name('tasks.complete');
+
+    Route::prefix('integrations')->name('integrations.')->group(function () {
+        Route::get('/health', IntegrationHealthController::class)
+            ->middleware('permission:integrations.view')
+            ->name('health');
+        Route::get('/settings', [IntegrationSettingsController::class, 'index'])
+            ->middleware('permission:integrations.view')
+            ->name('settings.index');
+        Route::get('/settings/{provider}', [IntegrationSettingsController::class, 'edit'])
+            ->middleware('permission:integrations.manage')
+            ->name('settings.edit');
+        Route::put('/settings/{provider}', [IntegrationSettingsController::class, 'update'])
+            ->middleware('permission:integrations.manage')
+            ->name('settings.update');
+
+        Route::get('/whatsapp', [WhatsAppInteractionController::class, 'index'])
+            ->middleware('permission:integrations.view')
+            ->name('whatsapp');
+        Route::get('/social-leads', [SocialLeadController::class, 'index'])
+            ->middleware('permission:integrations.view')
+            ->name('social-leads');
+        Route::get('/webhooks', [WebhookMonitorController::class, 'index'])
+            ->middleware('permission:integrations.view')
+            ->name('webhooks.index');
+        Route::get('/webhooks/{webhook}', [WebhookMonitorController::class, 'show'])
+            ->middleware('permission:integrations.view')
+            ->name('webhooks.show');
+        Route::post('/webhooks/{webhook}/retry', [WebhookMonitorController::class, 'retry'])
+            ->middleware('permission:integrations.manage')
+            ->name('webhooks.retry');
+    });
 
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::middleware('permission:users.view')->group(function () {

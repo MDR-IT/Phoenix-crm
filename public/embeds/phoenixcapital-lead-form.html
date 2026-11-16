@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Phoenix Capital — Lead form embed sample</title>
+  <style>
+    :root { --pc-navy: #0b2545; --pc-gold: #c4a35a; --pc-bg: #f5f7fa; }
+    body { font-family: Georgia, "Times New Roman", serif; background: var(--pc-bg); color: var(--pc-navy); margin: 0; padding: 2rem; }
+    .wrap { max-width: 420px; margin: 0 auto; }
+    h1 { font-size: 1.5rem; margin-bottom: .25rem; }
+    p { color: #445; font-size: .95rem; }
+    label { display: block; font-size: .85rem; margin: .75rem 0 .25rem; }
+    input, textarea { width: 100%; box-sizing: border-box; padding: .55rem .7rem; border: 1px solid #c9d2de; border-radius: 4px; font: inherit; }
+    button { margin-top: 1rem; background: var(--pc-navy); color: #fff; border: 0; padding: .7rem 1.1rem; border-radius: 4px; cursor: pointer; font: inherit; }
+    button:hover { background: #163964; }
+    .hp { position: absolute; left: -9999px; opacity: 0; height: 0; width: 0; overflow: hidden; }
+    .msg { margin-top: 1rem; padding: .75rem; border-radius: 4px; display: none; }
+    .msg.ok { display: block; background: #e8f5e9; }
+    .msg.err { display: block; background: #fdecea; }
+    .hint { font-size: .8rem; color: #667; margin-top: 1.5rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Phoenix Capital</h1>
+    <p>Request a call back — sample embed for phoenixcapital site.</p>
+
+    <form id="pc-lead-form" novalidate>
+      <label for="first_name">First name</label>
+      <input id="first_name" name="first_name" required>
+
+      <label for="last_name">Last name</label>
+      <input id="last_name" name="last_name" required>
+
+      <label for="phone">Phone (Kenya)</label>
+      <input id="phone" name="phone" placeholder="07xx xxx xxx" required>
+
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email">
+
+      <label for="message">Message</label>
+      <textarea id="message" name="message" rows="3" placeholder="How can we help?"></textarea>
+
+      <label>
+        <input type="checkbox" name="consent" value="1" checked>
+        I consent to be contacted about Phoenix Capital products.
+      </label>
+
+      <!-- Honeypots — leave empty -->
+      <div class="hp" aria-hidden="true">
+        <label>Website <input name="website_url" tabindex="-1" autocomplete="off"></label>
+        <label>Fax <input name="company_fax" tabindex="-1" autocomplete="off"></label>
+      </div>
+
+      <input type="hidden" name="utm_source" id="utm_source">
+      <input type="hidden" name="utm_campaign" id="utm_campaign">
+      <input type="hidden" name="page_url" id="page_url">
+
+      <button type="submit">Submit</button>
+    </form>
+
+    <div id="pc-msg" class="msg" role="status"></div>
+
+    <p class="hint">
+      Configure <code>data-endpoint</code> and <code>data-api-key</code> on the script tag below
+      (or edit the JS constants). API key is issued in CRM → Integration settings → Website.
+      Endpoint: <code>POST /api/leads/website</code>
+    </p>
+  </div>
+
+  <script>
+    (function () {
+      var ENDPOINT = document.currentScript?.getAttribute('data-endpoint')
+        || (window.PHOENIX_CRM_URL || 'http://127.0.0.1:8000') + '/api/leads/website';
+      var API_KEY = document.currentScript?.getAttribute('data-api-key')
+        || window.PHOENIX_WEBSITE_API_KEY
+        || '';
+
+      var params = new URLSearchParams(window.location.search);
+      document.getElementById('utm_source').value = params.get('utm_source') || '';
+      document.getElementById('utm_campaign').value = params.get('utm_campaign') || '';
+      document.getElementById('page_url').value = window.location.href;
+
+      var form = document.getElementById('pc-lead-form');
+      var msg = document.getElementById('pc-msg');
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        msg.className = 'msg';
+        msg.textContent = '';
+
+        var data = Object.fromEntries(new FormData(form).entries());
+        data.consent = !!form.consent.checked;
+        data.idempotency_key = 'embed-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+
+        try {
+          var res = await fetch(ENDPOINT, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-Phoenix-Api-Key': API_KEY
+            },
+            body: JSON.stringify(data)
+          });
+          var json = await res.json().catch(function () { return {}; });
+          if (!res.ok) {
+            msg.className = 'msg err';
+            msg.textContent = json.message || ('Request failed (' + res.status + ')');
+            return;
+          }
+          msg.className = 'msg ok';
+          msg.textContent = json.message || 'Thank you — we will contact you shortly.';
+          form.reset();
+        } catch (err) {
+          msg.className = 'msg err';
+          msg.textContent = 'Network error. Please try again.';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

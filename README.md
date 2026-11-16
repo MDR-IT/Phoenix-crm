@@ -2,7 +2,7 @@
 
 Omnichannel lead management and call centre CRM for Phoenix Capital (microfinance).
 
-**Phase 3 (this branch):** Follow-ups & activities — lead/customer activity timeline, notes, tasks, callbacks, dashboard widgets (today / overdue / upcoming), uncontacted-lead reminders, in-app notifications, configurable email/SMS provider stubs. Stacked on Phase 2 core CRM (and Phase 1 foundation).
+**Phase 4 (this branch):** Digital lead integrations — WhatsApp Business Cloud API, Meta (Facebook Lead Ads + Messenger), Instagram (supported Meta APIs only), and website form capture with a shared idempotent ingestion pipeline, encrypted credentials, health dashboard, and webhook monitoring. Stacked on Phase 3 follow-ups (and earlier phases).
 
 ## Stack
 
@@ -10,6 +10,7 @@ Omnichannel lead management and call centre CRM for Phoenix Capital (microfinanc
 - MySQL 8 or MariaDB (XAMPP on Windows is fine)
 - Laravel session auth + [spatie/laravel-permission](https://github.com/spatie/laravel-permission)
 - Frontend: Blade + Bootstrap 5 (CDN) with Phoenix Capital branding
+- Queues: database driver (`jobs` / `failed_jobs`) for webhook processing + retries
 
 ## Windows + XAMPP local setup
 
@@ -50,6 +51,7 @@ Omnichannel lead management and call centre CRM for Phoenix Capital (microfinanc
    DB_DATABASE=phoenix_crm
    DB_USERNAME=root
    DB_PASSWORD=
+   QUEUE_CONNECTION=database
    ```
 
 6. **Migrate and seed**
@@ -61,6 +63,12 @@ Omnichannel lead management and call centre CRM for Phoenix Capital (microfinanc
 
 7. Open [http://127.0.0.1:8000](http://127.0.0.1:8000) — you will be redirected to login.
 
+8. **Queue worker** (for async webhook jobs in non-test environments):
+
+   ```powershell
+   php artisan queue:work
+   ```
+
 ### Default seeded admin (dev only)
 
 | Field | Value |
@@ -68,46 +76,118 @@ Omnichannel lead management and call centre CRM for Phoenix Capital (microfinanc
 | Email | `admin@phoenixcapital.local` |
 | Password | `ChangeMeNow!123` |
 
-Override via `.env` before seeding:
+**Change this password immediately** after first login.
+
+---
+
+## Phase 4 — Digital lead integrations
+
+Without live credentials, every channel runs in **sandbox / pending configuration** mode. The UI and API responses say so explicitly — they never claim “live” without secrets.
+
+### Common ingestion pipeline
+
+`validate → auth / signature → normalize → source → duplicate check → customer/lead → channel interaction → assign → notify → webhook log`
+
+- Idempotent via `webhook_events.idempotency_key` / provider external IDs  
+- Queued with `ProcessWebhookEventJob`; failed events retried by `phoenix:retry-failed-webhooks`  
+- Credentials encrypted in `integration_settings` (Laravel `Crypt`)
+
+### Receiver endpoints (Phoenix CRM)
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET/POST | `/api/webhooks/whatsapp` | WhatsApp Cloud API webhook verify + receive |
+| GET/POST | `/api/webhooks/meta` | Facebook Lead Ads + Messenger |
+| GET/POST | `/api/webhooks/instagram` | Instagram Messaging (supported Meta webhooks only) |
+| POST | `/api/leads/website` | Website form (API key + rate limit + honeypot) |
+
+Outbound Graph calls use official hosts only: `https://graph.facebook.com/{version}/…` (WhatsApp messages, Lead Ads field fetch). No unofficial WhatsApp scraping.
+
+### Staff screens
+
+Under **Integrations** (permission `integrations.view` / `integrations.manage`):
+
+- Integration health dashboard  
+- Encrypted integration settings  
+- WhatsApp interactions  
+- Social / digital leads  
+- Webhook monitor (+ retry failed)
+
+### Configure WhatsApp Business number
+
+1. Create a Meta App with **WhatsApp** product; add a Business phone number.  
+2. Copy **Phone number ID**, permanent **access token**, **App secret**.  
+3. Set a **verify token** of your choosing.  
+4. In CRM → Integration settings → WhatsApp, paste credentials, set mode **Live**, enable.  
+   Or set env: `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`.  
+5. Point Meta webhook callback to `https://YOUR-CRM/api/webhooks/whatsapp` (subscribe to `messages`).  
+6. Re-seed or save settings — health should show **Live** only when required secrets are present.
+
+### Configure Meta app (Facebook + Instagram)
+
+1. Meta App → add **Webhooks** for your Page (fields: `leadgen`, `messages`) and Instagram Messaging as needed.  
+2. Generate a Page access token with lead retrieval permissions; note **Page ID**, **App secret**, verify token.  
+3. Callback URLs:  
+   - Facebook / Messenger: `https://YOUR-CRM/api/webhooks/meta`  
+   - Instagram Messaging: `https://YOUR-CRM/api/webhooks/instagram`  
+4. Save under Integration settings → Meta / Instagram, or env (`META_*`, `INSTAGRAM_*`).  
+5. **Unsupported (by design):** organic comment scraping, story scraping without official webhooks, unofficial Instagram private APIs / cookie login.
+
+### Website form embed (phoenixcapital site)
+
+1. Set `WEBSITE_LEADS_API_KEY` in `.env` or generate/store a key under Integration settings → Website; mode **Live**.  
+2. Sample embed: `public/embeds/phoenixcapital-lead-form.html` and helper `public/embeds/phoenixcapital-lead-form.js`.  
+3. Point the form at `POST /api/leads/website` with header `X-Phoenix-Api-Key: <key>`.  
+4. Include honeypot fields `website_url` and `company_fax` (must stay empty). Rate limit: `WEBSITE_LEADS_RATE_LIMIT` (default 30/min/IP).
+
+### Phase 4 env vars (optional — prefer encrypted admin settings)
 
 ```
-ADMIN_NAME="Super Administrator"
-ADMIN_EMAIL=admin@phoenixcapital.local
-ADMIN_PASSWORD=ChangeMeNow!123
+PHOENIX_INTEGRATION_USER_EMAIL=integrations@phoenixcapital.local
+
+WHATSAPP_GRAPH_VERSION=v21.0
+WHATSAPP_ACCESS_TOKEN=
+WHATSAPP_PHONE_NUMBER_ID=
+WHATSAPP_BUSINESS_ACCOUNT_ID=
+WHATSAPP_APP_SECRET=
+WHATSAPP_VERIFY_TOKEN=
+
+META_GRAPH_VERSION=v21.0
+META_ACCESS_TOKEN=
+META_APP_ID=
+META_APP_SECRET=
+META_VERIFY_TOKEN=
+META_PAGE_ID=
+
+INSTAGRAM_GRAPH_VERSION=v21.0
+INSTAGRAM_ACCESS_TOKEN=
+INSTAGRAM_APP_SECRET=
+INSTAGRAM_VERIFY_TOKEN=
+
+WEBSITE_LEADS_API_KEY=
+WEBSITE_LEADS_RATE_LIMIT=30
 ```
 
-**Change this password immediately** after first login (Profile → Update password), or re-seed with a stronger `ADMIN_PASSWORD`.
-
-## Phase 3 features
-
-| Area | What you get |
-|------|----------------|
-| Activity timeline | Chronological lead timeline: creation, source, notes, status, assignment, tasks, meetings/follow-ups; Phase 4 channel placeholder |
-| Notes | Notes on leads and customers; pinned option; timeline entries |
-| Tasks | Create, assign, deadlines, complete; overdue list + filters |
-| Follow-ups | Schedule callbacks / follow-ups / meetings; worklist buckets: today, overdue, upcoming |
-| Dashboard | Widgets for today’s / overdue / upcoming follow-ups, overdue tasks, uncontacted leads |
-| Reminders | Hourly scheduler command reminds assignees of uncontacted leads (`PHOENIX_UNCONTACTED_REMINDER_HOURS`, default 24) |
-| Notifications | In-app database notifications for task assign/complete, follow-up schedule/due, uncontacted leads |
-| Messaging stubs | Email/SMS via `OutboundMessenger` + null providers; credentials only from env (`PHOENIX_EMAIL_*`, `PHOENIX_SMS_*`) — never hardcoded |
-
-### Scheduler (reminders)
+### Scheduler
 
 ```powershell
 php artisan phoenix:process-follow-up-reminders
+php artisan phoenix:retry-failed-webhooks --sync
 ```
 
-Register Laravel’s scheduler (cron / Task Scheduler) to run `php artisan schedule:run` every minute so the hourly reminder job fires.
+Register `php artisan schedule:run` every minute (reminders hourly; webhook retries every five minutes).
 
-## Phase 2 features (still included)
+---
 
-Customers, lead register, manual capture, duplicates/merge, assignment strategies, Kanban pipeline, audit history, CSV/Excel export, agent scoping.
+## Earlier phases (still included)
 
-## Roles & permissions (Phase 3)
+| Phase | Scope |
+|-------|--------|
+| 1 | Auth, RBAC, branded shell, users/roles |
+| 2 | Customers, leads, duplicates/merge, assignment, Kanban, export |
+| 3 | Timeline, notes, tasks, follow-ups, reminders, notifications |
 
-New permissions: `activities.view`, `notes.*`, `tasks.view|create|update|complete|view_all`, `follow_ups.view|create|update|complete|view_all`.
-
-Agents get create/complete on their own items; managers/supervisors get `*_view_all`. Editable under **Roles & permissions**.
+Permissions added in Phase 4: `integrations.view`, `integrations.manage` (Marketing Officer + Super Admin manage; managers/supervisors can view).
 
 ## Tests
 
@@ -115,11 +195,11 @@ Agents get create/complete on their own items; managers/supervisors get `*_view_
 php artisan test
 ```
 
-Uses in-memory SQLite (`phpunit.xml`). Phase 3 coverage includes follow-up create/complete, notes, tasks, worklist scoping, uncontacted reminders, dashboard widgets, and messaging stubs.
+Uses in-memory SQLite. Phase 4 coverage: website submission, WhatsApp webhook, Meta webhook, idempotency, API key / signature security, integration screens.
 
-## Out of scope (later phases)
+## Out of scope
 
-WhatsApp / Meta / website auto-capture (Phase 4), Yeastar telephony (Phase 5), reporting dashboards (Phase 6). Timeline already reserves a channel-interaction placeholder for Phase 4.
+Yeastar P560 telephony (Phase 5), reporting suites (Phase 6). Do not use unofficial WhatsApp clients or scrapers.
 
 ## Git
 

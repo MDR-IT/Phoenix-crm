@@ -52,6 +52,7 @@ return [
         'leads.manage',
         'reports.view',
         'integrations.view',
+        'integrations.manage',
     ],
 
     'lead_statuses' => [
@@ -93,7 +94,15 @@ return [
         'follow_up' => 'Follow-up',
         'follow_up_completed' => 'Follow-up done',
         'reminder' => 'Reminder',
-        'channel_interaction' => 'Channel (Phase 4)',
+        'channel_interaction' => 'Channel interaction',
+    ],
+
+    'integration_channels' => [
+        'whatsapp' => 'WhatsApp',
+        'facebook' => 'Facebook Lead Ads',
+        'messenger' => 'Messenger',
+        'instagram' => 'Instagram',
+        'website' => 'Website',
     ],
 
     'follow_up_types' => [
@@ -132,6 +141,41 @@ return [
             'api_key' => env('PHOENIX_SMS_API_KEY'),
             'username' => env('PHOENIX_SMS_USERNAME'),
             'sender_id' => env('PHOENIX_SMS_SENDER_ID'),
+        ],
+    ],
+
+    /*
+    | Phase 4 — digital lead integrations.
+    | Credentials preferably live encrypted in integration_settings; env values
+    | are optional bootstrap / local overrides only. Never hardcode secrets.
+    */
+    'integrations' => [
+        'system_user_email' => env('PHOENIX_INTEGRATION_USER_EMAIL', 'integrations@phoenixcapital.local'),
+        'whatsapp' => [
+            'graph_version' => env('WHATSAPP_GRAPH_VERSION', 'v21.0'),
+            'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
+            'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+            'business_account_id' => env('WHATSAPP_BUSINESS_ACCOUNT_ID'),
+            'app_secret' => env('WHATSAPP_APP_SECRET'),
+            'verify_token' => env('WHATSAPP_VERIFY_TOKEN'),
+        ],
+        'meta' => [
+            'graph_version' => env('META_GRAPH_VERSION', 'v21.0'),
+            'access_token' => env('META_ACCESS_TOKEN'),
+            'app_id' => env('META_APP_ID'),
+            'app_secret' => env('META_APP_SECRET'),
+            'verify_token' => env('META_VERIFY_TOKEN'),
+            'page_id' => env('META_PAGE_ID'),
+        ],
+        'instagram' => [
+            'graph_version' => env('INSTAGRAM_GRAPH_VERSION', 'v21.0'),
+            'access_token' => env('INSTAGRAM_ACCESS_TOKEN'),
+            'app_secret' => env('INSTAGRAM_APP_SECRET'),
+            'verify_token' => env('INSTAGRAM_VERIFY_TOKEN'),
+        ],
+        'website' => [
+            'api_key' => env('WEBSITE_LEADS_API_KEY'),
+            'rate_limit_per_minute' => (int) env('WEBSITE_LEADS_RATE_LIMIT', 30),
         ],
     ],
 
@@ -187,6 +231,7 @@ return [
             'follow_ups.complete',
             'follow_ups.view_all',
             'reports.view',
+            'integrations.view',
         ],
         'Call Centre Supervisor' => [
             'dashboard.view',
@@ -219,6 +264,7 @@ return [
             'follow_ups.complete',
             'follow_ups.view_all',
             'reports.view',
+            'integrations.view',
         ],
         'Call Centre Agent' => [
             'dashboard.view',
@@ -276,7 +322,9 @@ return [
             'follow_ups.view',
             'reports.view',
             'integrations.view',
+            'integrations.manage',
         ],
+        // Super Administrator already gets all permissions via '*'.
         'Compliance Officer' => [
             'dashboard.view',
             'users.view',

@@ -12,6 +12,7 @@ use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
@@ -25,6 +26,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->appendToGroup('web', [
             EnsureUserIsActive::class,
+        ]);
+
+        // Webhooks are authenticated via provider signatures / API keys, not CSRF sessions.
+        $middleware->validateCsrfTokens(except: [
+            'api/webhooks/*',
+            'api/leads/website',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

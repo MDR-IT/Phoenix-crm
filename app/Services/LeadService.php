@@ -26,7 +26,29 @@ class LeadService
      */
     public function createManual(array $data, User $actor): array
     {
-        return DB::transaction(function () use ($data, $actor) {
+        return $this->createLead($data, $actor, 'manual');
+    }
+
+    /**
+     * Create a lead from a digital channel (WhatsApp / Meta / website).
+     *
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $channelMeta
+     * @return array{lead: Lead, duplicates: \Illuminate\Support\Collection}
+     */
+    public function createFromChannel(array $data, string $channel, User $actor, array $channelMeta = []): array
+    {
+        return $this->createLead($data, $actor, $channel, $channelMeta);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $channelMeta
+     * @return array{lead: Lead, duplicates: \Illuminate\Support\Collection}
+     */
+    private function createLead(array $data, User $actor, string $channel, array $channelMeta = []): array
+    {
+        return DB::transaction(function () use ($data, $actor, $channel, $channelMeta) {
             $customer = $this->resolveCustomer($data);
 
             $lead = Lead::create([
@@ -44,14 +66,14 @@ class LeadService
                 'county_id' => $data['county_id'] ?? $customer->county_id,
                 'town' => $data['town'] ?? $customer->town,
                 'created_by' => $actor->id,
-                'channel' => 'manual',
+                'channel' => $channel,
             ]);
 
             $lead->statusHistories()->create([
                 'from_status' => null,
                 'to_status' => $lead->status,
                 'user_id' => $actor->id,
-                'notes' => 'Lead created',
+                'notes' => $channel === 'manual' ? 'Lead created' : 'Lead created via '.$channel,
                 'created_at' => now(),
             ]);
 
@@ -64,7 +86,7 @@ class LeadService
                 $actor,
                 'Channel: '.$lead->channel,
                 null,
-                ['channel' => $lead->channel, 'status' => $lead->status]
+                array_merge(['channel' => $lead->channel, 'status' => $lead->status], $channelMeta)
             );
 
             if ($lead->leadSource) {
@@ -82,7 +104,7 @@ class LeadService
             if (! empty($data['assigned_to'])) {
                 $assignee = User::find($data['assigned_to']);
                 if ($assignee) {
-                    $this->assignmentService->assign($lead, $assignee, $actor, 'manual');
+                    $this->assignmentService->assign($lead, $assignee, $actor, $channel === 'manual' ? 'manual' : 'digital_'.$channel);
                 }
             } elseif (! empty($data['assignment_strategy'])) {
                 $this->assignmentService->assignByStrategy(
