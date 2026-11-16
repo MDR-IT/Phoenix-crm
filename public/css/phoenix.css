@@ -1,0 +1,286 @@
+:root {
+    --pc-navy: #0b1f3a;
+    --pc-navy-deep: #07152a;
+    --pc-navy-soft: #132f54;
+    --pc-gold: #c4a35a;
+    --pc-gold-soft: #d4b978;
+    --pc-white: #ffffff;
+    --pc-muted: #6b7a90;
+    --pc-surface: #f3f6fa;
+    --pc-border: #d9e1ec;
+    --pc-success: #1f7a4d;
+    --pc-danger: #a33b3b;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Source Sans 3", "Segoe UI", sans-serif;
+    color: var(--pc-navy);
+    background: var(--pc-surface);
+}
+
+h1, h2, h3, h4, .brand-display {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    letter-spacing: 0.01em;
+}
+
+a {
+    color: var(--pc-navy-soft);
+}
+
+.pc-guest-body {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background:
+        radial-gradient(circle at top right, rgba(196, 163, 90, 0.18), transparent 40%),
+        linear-gradient(145deg, var(--pc-navy-deep) 0%, var(--pc-navy) 48%, var(--pc-navy-soft) 100%);
+    padding: 2rem 1rem;
+}
+
+.pc-login-panel {
+    width: min(440px, 100%);
+    background: var(--pc-white);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 18px 50px rgba(7, 21, 42, 0.35);
+    padding: 2.25rem 2rem;
+}
+
+.pc-brand-mark {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.pc-brand-mark .mark {
+    width: 42px;
+    height: 42px;
+    border: 2px solid var(--pc-gold);
+    display: grid;
+    place-items: center;
+    color: var(--pc-gold);
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+.pc-brand-mark .title {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: 1.55rem;
+    line-height: 1.1;
+    margin: 0;
+    color: var(--pc-navy);
+}
+
+.pc-brand-mark .subtitle {
+    margin: 0;
+    color: var(--pc-muted);
+    font-size: 0.85rem;
+}
+
+.btn-pc-primary {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--pc-navy);
+    --bs-btn-border-color: var(--pc-navy);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--pc-navy-soft);
+    --bs-btn-hover-border-color: var(--pc-navy-soft);
+    --bs-btn-focus-shadow-rgb: 11, 31, 58;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--pc-navy-deep);
+    --bs-btn-active-border-color: var(--pc-navy-deep);
+    border-radius: 0.25rem;
+}
+
+.btn-pc-gold {
+    --bs-btn-color: var(--pc-navy);
+    --bs-btn-bg: var(--pc-gold);
+    --bs-btn-border-color: var(--pc-gold);
+    --bs-btn-hover-color: var(--pc-navy);
+    --bs-btn-hover-bg: var(--pc-gold-soft);
+    --bs-btn-hover-border-color: var(--pc-gold-soft);
+    border-radius: 0.25rem;
+}
+
+.pc-shell {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+}
+
+.pc-sidebar {
+    background: linear-gradient(180deg, var(--pc-navy-deep), var(--pc-navy));
+    color: #fff;
+    padding: 1.25rem 1rem 2rem;
+}
+
+.pc-sidebar .brand {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.5rem 0.65rem 1.25rem;
+    border-bottom: 1px solid rgba(196, 163, 90, 0.35);
+    margin-bottom: 1rem;
+}
+
+.pc-sidebar .brand .mark {
+    width: 36px;
+    height: 36px;
+    border: 1.5px solid var(--pc-gold);
+    display: grid;
+    place-items: center;
+    color: var(--pc-gold);
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 700;
+}
+
+.pc-sidebar .brand strong {
+    display: block;
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.pc-sidebar .brand small {
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.pc-nav a {
+    display: block;
+    color: rgba(255, 255, 255, 0.82);
+    text-decoration: none;
+    padding: 0.65rem 0.75rem;
+    border-left: 3px solid transparent;
+    margin-bottom: 0.15rem;
+}
+
+.pc-nav a:hover,
+.pc-nav a.active {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    border-left-color: var(--pc-gold);
+}
+
+.pc-nav .nav-section {
+    margin: 1rem 0.75rem 0.35rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--pc-gold-soft);
+}
+
+.pc-nav .nav-later {
+    opacity: 0.55;
+    font-style: italic;
+    pointer-events: none;
+}
+
+.pc-main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.pc-topbar {
+    background: var(--pc-white);
+    border-bottom: 1px solid var(--pc-border);
+    padding: 0.85rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.pc-content {
+    padding: 1.5rem;
+}
+
+.pc-kpi {
+    background: var(--pc-white);
+    border: 1px solid var(--pc-border);
+    border-top: 3px solid var(--pc-gold);
+    padding: 1.15rem 1.2rem;
+    height: 100%;
+}
+
+.pc-kpi .label {
+    color: var(--pc-muted);
+    font-size: 0.85rem;
+    margin-bottom: 0.35rem;
+}
+
+.pc-kpi .value {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: 2rem;
+    line-height: 1;
+    margin-bottom: 0.4rem;
+}
+
+.pc-kpi .hint {
+    font-size: 0.78rem;
+    color: var(--pc-muted);
+}
+
+.pc-panel {
+    background: var(--pc-white);
+    border: 1px solid var(--pc-border);
+    padding: 1.25rem;
+}
+
+.table thead th {
+    background: #eef3f9;
+    color: var(--pc-navy);
+    font-weight: 600;
+    border-bottom-color: var(--pc-border);
+}
+
+.badge-role {
+    background: #e8eef7;
+    color: var(--pc-navy);
+    border: 1px solid var(--pc-border);
+}
+
+.badge-active {
+    background: #e7f5ee;
+    color: var(--pc-success);
+}
+
+.badge-inactive {
+    background: #f8eaea;
+    color: var(--pc-danger);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--pc-gold);
+    box-shadow: 0 0 0 0.2rem rgba(196, 163, 90, 0.2);
+}
+
+.alert {
+    border-radius: 0.25rem;
+}
+
+@media (max-width: 991.98px) {
+    .pc-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .pc-sidebar {
+        padding-bottom: 1rem;
+    }
+
+    .pc-nav {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.25rem;
+    }
+
+    .pc-nav .nav-section {
+        grid-column: 1 / -1;
+    }
+}
